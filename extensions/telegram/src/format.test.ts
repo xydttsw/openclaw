@@ -49,7 +49,6 @@ describe("markdownToTelegramHtml", () => {
       "<pre><code>oauth2: invalid_grant</code></pre>",
     ].join("\n");
 
-    expect(markdownToTelegramHtml(input)).toBe(input);
     // Bot API 10.1+ <blockquote> is converted to <b> in non-rich mode
     const expected = [
       "✉️ <b>Morning Email Rollup</b>",

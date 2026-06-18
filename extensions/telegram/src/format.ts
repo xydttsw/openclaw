@@ -168,7 +168,7 @@ export function markdownToTelegramHtml(
     options.richMode === true
       ? supportedHtml
       : supportedHtml
-          .replace(/<blockquote>/g, "<b>")
+          .replace(/<blockquote[^>]*>/g, "<b>")
           .replace(/<\/blockquote>/g, "</b>")
           .replace(/<h([1-6])>/g, "<b>")
           .replace(/<\/h([1-6])>/g, "</b>");

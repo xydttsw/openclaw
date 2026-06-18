@@ -50,17 +50,30 @@ describe("markdownToTelegramHtml", () => {
     ].join("\n");
 
     expect(markdownToTelegramHtml(input)).toBe(input);
+    // Bot API 10.1+ <blockquote> is converted to <b> in non-rich mode
+    const expected = [
+      "✉️ <b>Morning Email Rollup</b>",
+      "",
+      "<b>✅ No important emails in the last 24 hours.</b>",
+      "",
+      "<pre><code>oauth2: invalid_grant</code></pre>",
+    ].join("\n");
+
+    expect(markdownToTelegramHtml(input)).toBe(expected);
     expect(
-      markdownToTelegramChunks(input, 4096)
+      markdownToTelegramChunks(expected, 4096)
         .map((chunk) => chunk.html)
         .join(""),
-    ).toBe(input);
+    ).toBe(expected);
   });
 
   it("preserves Telegram expandable blockquote HTML", () => {
     const input = "<blockquote expandable>hidden details</blockquote>";
+    // Bot API 10.1+ blockquote expandable is converted to <b> in non-rich mode
+    const expected = "<b>hidden details</b>";
 
-    expect(markdownToTelegramHtml(input)).toBe(input);
+    expect(markdownToTelegramHtml(input)).toBe(expected);
+    // renderTelegramHtmlText with textMode "html" uses escapeUnsupportedTelegramHtml (separate path)
     expect(renderTelegramHtmlText(input, { textMode: "html" })).toBe(input);
   });
 
@@ -221,30 +234,29 @@ describe("markdownToTelegramHtml", () => {
     ).toBe('<pre><code class="language-python">print(1)\n</code></pre>');
   });
 
-  it("renders blockquotes as native Telegram blockquote tags", () => {
+  it("renders blockquotes as bold in non-rich mode", () => {
     const res = markdownToTelegramHtml("> Quote");
-    expect(res).toContain("<blockquote>");
+    expect(res).toContain("<b>");
     expect(res).toContain("Quote");
-    expect(res).toContain("</blockquote>");
+    expect(res).toContain("</b>");
   });
 
-  it("renders blockquotes with inline formatting", () => {
+  it("renders blockquotes with inline formatting in non-rich mode", () => {
     const res = markdownToTelegramHtml("> **bold** quote");
-    expect(res).toContain("<blockquote>");
+    expect(res).toContain("<b><b>bold</b> quote</b>");
     expect(res).toContain("<b>bold</b>");
-    expect(res).toContain("</blockquote>");
   });
 
-  it("renders multiline blockquotes as a single Telegram blockquote", () => {
+  it("renders multiline blockquotes as a single bold block", () => {
     const res = markdownToTelegramHtml("> first\n> second");
-    expect(res).toBe("<blockquote>first\nsecond</blockquote>");
+    expect(res).toBe("<b>first\nsecond</b>");
   });
 
-  it("renders separated quoted paragraphs as distinct blockquotes", () => {
+  it("renders separated quoted paragraphs as distinct bold blocks", () => {
     const res = markdownToTelegramHtml("> first\n\n> second");
-    expect(res).toContain("<blockquote>first");
-    expect(res).toContain("<blockquote>second</blockquote>");
-    expect(res.match(/<blockquote>/g)).toHaveLength(2);
+    expect(res).toContain("<b>first</b>");
+    expect(res).toContain("<b>second</b>");
+    expect(res.match(/<b>/g)).toHaveLength(2);
   });
 
   it("renders fenced code block languages for Telegram native copy buttons", () => {
